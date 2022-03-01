@@ -1,0 +1,146 @@
+---
+title: "ECON 432 Homework 1"
+author: "Madelyn Caufield"
+date: "`r format(Sys.Date(),'%b %d,%Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    number_sections: yes
+    theme: united
+    highlight: tango
+---
+
+```{r}
+getwd()
+setwd("/Users/madelyncaufield/Desktop/ECON432 Data Science for Financial Engineering/Homework 1")
+getwd()
+```
+
+```{r}
+df <- read.csv("sbuxPrices.csv")
+head(df)
+```
+
+```{r}
+library(dplyr)
+
+sbux.df = df %>%
+          select(Date, Adj.Close)
+```
+
+# Part II
+## Question 1
+```{r}
+head(sbux.df)
+```
+This gives us the first 6 rows of the data.
+
+```{r}
+tail(sbux.df)
+```
+This gives us the last 6 rows of the data.
+
+```{r}
+sbuxPrices.df = sbux.df[, "Adj.Close", drop=FALSE]
+sbuxPrices.df
+```
+This gives us just the column for adjusted closing prices and drops the column Date column to make a new data frame called sbuxPrices.df. 
+
+```{r}
+rownames(sbuxPrices.df) = sbux.df$Date
+rownames(sbuxPrices.df)
+```
+This converted the Date column to row names for the sbuxPrices.df data frame. 
+
+```{r}
+head(sbuxPrices.df)
+```
+This gave us the first 6 rows of the adjusted closing price column with the new row names (dates from above) from the sbuxPrices.df data frame.
+
+```{r}
+sbux.df[101:132,]
+```
+This gave us only rows 101-132 for the sbux.df data frame. 
+
+## Question 2
+```{r}
+class(sbux.df$Date)
+sbux.df$Date <- as.Date(sbux.df$Date,format = '%Y-%m-%d')
+class(sbux.df$Date)
+```
+
+```{r}
+plot(Adj.Close~Date, sbux.df, type='l',col="blue",xlab = 'Date',ylab='Starbucks Prices',
+     main='Monthly Prices of Starbucks Shares')
+T <- length(sbux.df$Date)
+ticks <- seq(sbux.df$Date[1], sbux.df$Date[T], by = "quarters")
+axis(1, at = ticks, labels = FALSE)
+legend('topleft', names(sbuxPrices.df), col= "blue", lty=1, cex=.65)
+```
+
+## Question 3
+### Monthly Simple Return
+```{r}
+sbux.df$ret[2:T] <-  sbux.df$Adj.Close[2:T]/sbux.df$Adj.Close[1:(T-1)] - 1
+head(sbux.df$ret)
+```
+
+```{r}
+library(ggplot2)
+
+df.g <- sbux.df[,c('Date','ret')] 
+df.g <- df.g[-c(1),]
+
+head(df.g)
+```
+
+### Monthly Simple Return Plot
+```{r}
+g <- ggplot(df.g, aes(x = Date, y = ret)) + 
+  geom_line(color="brown1") +  
+  ylab("Starbucks Simple Returns") +
+  xlab("Date (03/01/1998 - 03/01/2013)") +
+  ggtitle("Monthly Simple Returns of Starbucks Shares")
+g
+```
+
+### Monthly Coninuously Compounded Return
+```{r}
+sbux.df$cc.ret[2:T] <-  log(sbux.df$Adj.Close[2:T]/sbux.df$Adj.Close[1:(T-1)])
+head(sbux.df$cc.ret)
+
+df.g$cc.ret <- sbux.df$cc.ret[2:T]
+head(df.g)
+```
+
+### Monthly Continuously Compounded Return Plot
+```{r}
+g <- ggplot(df.g, aes(x = Date, y = cc.ret)) + 
+  geom_line(color="lightseagreen") +  
+  ylab("Starbucks Continuously Compounded Returns") +
+  xlab("Date (03/01/1998 - 03/01/2013)") +
+  ggtitle("Monthly Continuously Compounded Returns of Starbucks Shares")
+g
+```
+
+### Plot of the Monthly Simple Return and Continuously Compounded Return
+```{r}
+library(reshape2)
+d <- melt(df.g, id.vars="Date")
+
+ggplot(d, aes(Date, value, col=variable)) + 
+  geom_line() +
+  ggtitle("Monthly Simple Returns and CC Returns of Starbucks Shares")
+```
+
+
+
+
+
+
+
+
+
+

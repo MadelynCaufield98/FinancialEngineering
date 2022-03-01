@@ -1,0 +1,244 @@
+---
+title: "ECON 432 Homework 3 R Excercises"
+author: "Madelyn Caufield"
+date: "`r format(Sys.Date(),'%b %d,%Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    number_sections: yes
+    theme: united
+    highlight: tango
+---
+
+```{r}
+library(mvtnorm)
+```
+
+```{r}
+CalcSigmaMtx <- function(rho.xy, sig.x, sig.y) {
+    # ---- Assert simulate from bivariate normal with rho
+    sig.xy = rho.xy * sig.x * sig.y
+    matrix(c(sig.x^2, sig.xy, sig.xy, sig.y^2), 2, 2, byrow = TRUE)
+}
+
+GenerateBiNormMtx <- function(rho.xy, n = 100, seed = 123, mu.x, mu.y, sig.x, 
+    sig.y, sigma.xy) {
+    # ---- Assert use the rmvnorm() function to simulate from bivariate normal
+    set.seed(seed)
+    xy.vals = rmvnorm(n, mean = c(mu.x, mu.y), sigma = sigma.xy)
+}
+
+layout(matrix(1:1, 1, 1, byrow = TRUE))
+
+muX = 0.01
+sigX = 0.25
+muY = 0.05
+sigY = 0.15
+```
+
+```{r}
+sigmaXY <- CalcSigmaMtx(rho.xy = 0.99, sigX, sigX)
+sigmaXY
+
+valXY <- GenerateBiNormMtx(rho.xy = 0.99, n = 100, seed = 123, muX, muY, sigX, 
+    sigY, sigmaXY)
+head(valXY)
+
+plot(valXY[, 1], valXY[, 2], pch = 16, cex = 2, col = "red", xlab = "x", ylab = "y")
+title("Bivariate normal: rho=0.99")
+abline(h = muY, v = muX)
+```
+
+```{r}
+sigma2XY <- CalcSigmaMtx(rho.xy = 0.9, sigX, sigX)
+sigma2XY
+
+val2XY <- GenerateBiNormMtx(rho.xy = 0.9, n = 100, seed = 123, muX, muY, sigX, 
+    sigY, sigma2XY)
+head(val2XY)
+
+plot(val2XY[, 1], val2XY[, 2], pch = 16, cex = 2, col = "red", xlab = "x", ylab = "y")
+title("Bivariate normal: rho=0.9")
+abline(h = muY, v = muX)
+```
+
+```{r}
+sigma3XY <- CalcSigmaMtx(rho.xy = 0.5, sigX, sigX)
+sigma3XY
+
+val3XY <- GenerateBiNormMtx(rho.xy = 0.5, n = 100, seed = 123, muX, muY, sigX, 
+    sigY, sigma3XY)
+head(val3XY)
+
+plot(val3XY[, 1], val3XY[, 2], pch = 16, cex = 2, col = "red", xlab = "x", ylab = "y")
+title("Bivariate normal: rho=0.5")
+abline(h = muY, v = muX)
+```
+
+```{r}
+sigma4XY <- CalcSigmaMtx(rho.xy = 0, sigX, sigX)
+sigma4XY
+
+val4XY <- GenerateBiNormMtx(rho.xy = 0, n = 100, seed = 123, muX, muY, sigX, 
+    sigY, sigma4XY)
+head(val4XY)
+
+plot(val4XY[, 1], val4XY[, 2], pch = 16, cex = 2, col = "red", xlab = "x", ylab = "y")
+title("Bivariate normal: rho=0")
+abline(h = muY, v = muX)
+```
+
+```{r}
+sigma5XY <- CalcSigmaMtx(rho.xy = -0.9, sigX, sigX)
+sigma5XY
+
+val5XY <- GenerateBiNormMtx(rho.xy = -0.9, n = 100, seed = 123, muX, muY, sigX, 
+    sigY, sigma5XY)
+head(val5XY)
+
+plot(val5XY[, 1], val5XY[, 2], pch = 16, cex = 2, col = "red", xlab = "x", ylab = "y")
+title("Bivariate normal: rho=-0.9")
+abline(h = muY, v = muX)
+```
+
+```{r}
+setwd("/Users/madelyncaufield/Desktop/ECON432 Data Science for Financial Engineering/Homework 3")
+df <- read.csv("MSFT.csv")
+head(df)
+```
+
+```{r}
+library(dplyr)
+
+msft.df = df %>%
+          select(Date, Adj.Close)
+head(msft.df)
+```
+
+```{r}
+class(msft.df$Date)
+msft.df$Date <- as.Date(msft.df$Date,format = '%Y-%m-%d')
+class(msft.df$Date)
+```
+
+```{r}
+msft.df$cc.ret[2:T] <-  log(msft.df$Adj.Close[2:T]/msft.df$Adj.Close[1:(T-1)])
+head(msft.df$cc.ret)
+
+df.g <- msft.df[,c('Date','cc.ret')] 
+df.g <- msft.df[-c(1),]
+
+head(df.g)
+```
+
+```{r}
+library(MASS)
+
+fitdistr(df.g$cc.ret, "normal")
+```
+
+```{r}
+x = df.g$cc.ret
+mu.r = 0.0008232918
+sd.r = 0.0160125173
+v = sd.r^2
+n = length(x)
+skewness <- function(x) {
+    third.moment <- (1/(n - 2)) * sum((x - mu.r)^3)
+    third.moment/(v^(3/2))
+}
+
+skewness(df.g$cc.ret)
+```
+The coefficient of skewness is approximately equal to 0. This indicates that the the graph is mostly symmetric, however, it is approximately -0.25 less than 0 meaning it has more of a heavy left tail than a normal distribution. 
+
+
+
+```{r}
+x = df.g$cc.ret
+mu.r = 0.0008232918
+sd.r = 0.0160125173
+v = sd.r^2
+n = length(x)
+skewness <- function(x) {
+    third.moment <- (1/(n - 2)) * sum((x - mu.r)^4)
+    third.moment/(v^(4/2))
+}
+s = skewness(df.g$cc.ret)
+
+s-3
+```
+The coefficient for excess kurtosis is positive, meaning that the data for cc returns has heavier tails than the normal distribution.
+
+```{r}
+library(tseries)
+jarque.bera.test(df.g$cc.ret)
+```
+We would reject the null hypothesis that the data is normally distributed since the p value is less than 0.05
+
+In view of the testing results from the Jarque-Bera test, we can trust the maximum likelihood estimators of mu and sd. The significant results from the JB test that the data is not normally distributed is consistent with our coefficients of skewness and kurtosis. From the sample skewness we saw that the data had a heavier left tail than normal and from the excess kurtosis, we saw that the cc returns data had heavier tails than that of the normal. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

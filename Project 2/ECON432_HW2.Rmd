@@ -1,0 +1,193 @@
+---
+title: "ECON 432 Homework 2 (2-6)"
+author: "Madelyn Caufield"
+date: "`r format(Sys.Date(),'%b %d,%Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    number_sections: yes
+    theme: united
+    highlight: tango
+---
+
+# Part 1: Review Questions (2-6)
+## Question 2
+```{r}
+pnorm(-1.96, mean = 0, sd = 1)
+
+1-pnorm(1.64, mean = 0, sd = 1)
+
+val <- pnorm(0.5, mean = 0, sd = 1) - pnorm(-0.5, mean = 0, sd = 1)
+cat("The target probablity is: ", val)
+
+qnorm(0.010)
+qnorm(0.99)
+qnorm(.05)
+qnorm(.95)
+```
+
+## Question 3
+```{r}
+intervals <- seq(-0.25, 0.35,length=100)
+mrst <- dnorm(intervals,0.05,0.1)
+sbux <- dnorm(intervals,0.025,0.05)
+plot(intervals, mrst, ylab='normal curves for stocks X and Y', type="l", col="black")
+lines(intervals, sbux, type="l", col="red")
+```
+The Microsoft stock has the highest risk because it has the highest deviation from the mean. If I was a risk-averse investor I would want to invest in Starbucks.
+
+## Question 4
+```{r}
+library(scales)
+W0 = 100000
+mu.r = 0.05
+sigma.r = 0.12
+alpha = 0.01
+VaR.01 = qnorm(alpha, mu.r, sigma.r) * W0
+sprintf("The %s VaR is %.3f", percent(alpha), VaR.01)
+
+Integrand <- function(u, alpha_value, mu, sigma) {
+  W0*(qnorm(u, mu, sigma))/alpha_value
+  }
+res <- integrate(Integrand, lower = 0, upper = alpha,
+                 alpha_value=alpha,
+                 mu = mu.r,
+                 sigma = sigma.r)
+
+sprintf("The %s ES is %#.3f", percent(alpha), res[1])
+
+alpha = 0.05
+VaR.05 = qnorm(0.05, mu.r, sigma.r) * W0
+sprintf("The %s VaR is %.3f", percent(alpha), VaR.05)
+
+Integrand <- function(u, alpha_value, mu, sigma) {
+  W0*(qnorm(u, mu, sigma))/alpha_value
+  }
+res <- integrate(Integrand, lower = 0, upper = alpha,
+                 alpha_value=alpha,
+                 mu = mu.r,
+                 sigma = sigma.r)
+
+sprintf("The %s ES is %#.3f", percent(alpha), res[1])
+```
+
+## Question 5
+```{r}
+library(scales)
+W0 <- 100000
+alpha = 0.01
+mu.r = 0.05
+sigma.r = 0.12
+VaR.01 = W0*(exp(qnorm(alpha, mu.r, sigma.r))-1)
+sprintf("The %s VaR is %.3f", percent(alpha), VaR.01)
+
+Integrand <- function(u, alpha_value, mu, sigma) {
+  W0*(exp(qnorm(u, mu, sigma))-1)/alpha_value
+  }
+res <- integrate(Integrand, lower = 0, upper = alpha,
+                 alpha_value=alpha,
+                 mu = mu.r,
+                 sigma = sigma.r)
+
+sprintf("The %s ES is %#.3f", percent(alpha), res[1])
+
+W0 <- 100000
+alpha = 0.05
+mu.r = 0.05
+sigma.r = 0.12
+VaR.05 = W0*(exp(qnorm(alpha, mu.r, sigma.r))-1)
+sprintf("The %s VaR is %.3f", percent(alpha), VaR.05)
+
+Integrand <- function(u, alpha_value, mu, sigma) {
+  W0*(exp(qnorm(u, mu, sigma))-1)/alpha_value
+  }
+res <- integrate(Integrand, lower = 0, upper = alpha,
+                 alpha_value=alpha,
+                 mu = mu.r,
+                 sigma = sigma.r)
+
+sprintf("The %s ES is %#.3f", percent(alpha), res[1])
+
+mu = 12*mu.r
+abs.sd = sqrt(12*(sigma.r)^2)
+alpha = 0.01
+VaR.01 = W0*(exp(qnorm(alpha, mu, abs.sd))-1)
+sprintf("The %s VaR over the year investment is %.3f", percent(alpha), VaR.01)
+
+Integrand <- function(u, alpha_value, mu, sigma) {
+  W0*(exp(qnorm(u, mu, sigma))-1)/alpha_value
+  }
+res <- integrate(Integrand, lower = 0, upper = alpha,
+                 alpha_value=alpha,
+                 mu = mu,
+                 sigma = abs.sd)
+
+sprintf("The %s ES over the year investment is %#.3f", percent(alpha), res[1])
+
+alpha = 0.05
+VaR.05 = W0*(exp(qnorm(alpha, mu, abs.sd))-1)
+sprintf("The %s VaR over the year investment is %.3f", percent(alpha), VaR.05)
+
+Integrand <- function(u, alpha_value, mu, sigma) {
+  W0*(exp(qnorm(u, mu, sigma))-1)/alpha_value
+  }
+res <- integrate(Integrand, lower = 0, upper = alpha,
+                 alpha_value=alpha,
+                 mu = mu,
+                 sigma = abs.sd)
+
+sprintf("The %s ES over the year investment is %#.3f", percent(alpha), res[1])
+```
+
+## Question 6
+```{r}
+x <- seq(-10,10,by=0.1)
+
+x.norm <- dnorm(x) # standard norm density
+
+x.t1 <- dt(x,df=1)
+x.t2 <- dt(x,df=2)
+x.t4 <- dt(x,df=4)
+x.t10 <- dt(x,df=10)
+
+plot(x.t1~x, type="l", col="blue", 
+     lwd=2, ylim=c(0,0.5), xlab = "x", ylab = "f(x)", 
+     main = "Density Curves of Multiple Distributions")
+
+lines(x.t2~x, lty = "dashed", col="red", 
+     lwd=2)
+
+lines(x.t4~x, lty = "dotted", col = "green", lwd = 2)
+
+lines(x.t10~x, lty ="longdash", col = "black", lwd = 2)
+
+curve( dchisq(x, df=1), col='purple', add=TRUE)
+
+curve( dchisq(x, df=2), col='pink', add=TRUE, lty = "longdash")
+
+curve( dchisq(x, df=4), col='yellow', add=TRUE, lty = "dashed")
+
+curve( dchisq(x, df=10), col='orange', add=TRUE, lty = "dotted")
+
+lines(x.norm~x, type="l", col = "brown", lwd = 2)
+
+legend(x="topleft", legend=c("t(1)","t(2)","t(4)","t(10)","N(0,1)"),
+       col=c("blue","red", "green","black", "brown"), lwd=2)
+```
+5% VaR of t-distribution with 2 degrees of freedom is greater because the number of observations is less.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,211 @@
+---
+title: "ECON 432 Homework 5"
+author: "Madelyn Caufield"
+date: "`r format(Sys.Date(),'%b %d,%Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    number_sections: yes
+    theme: united
+    highlight: tango
+---
+
+#Question 1
+```{r}
+set.seed(123)
+ls1 <- list(order = c(0, 0, 1), ma = 0.05)
+mu <- 1
+
+MA1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+plot(MA1)
+```
+
+```{r}
+acf(MA1)
+```
+
+```{r}
+ls1 <- list(order = c(0, 0, 1), ma = 0.5)
+
+samp1_MA1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+acf(samp1_MA1)
+```
+
+```{r}
+ls1 <- list(order = c(0, 0, 1), ma = 0.9)
+
+samp2_MA1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+acf(samp2_MA1)
+```
+
+```{r}
+ls1 <- list(order = c(0, 0, 1), ma = 0.99)
+
+samp3_MA1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+acf(samp3_MA1)
+```
+The theoretical ACF performed the best, with all spikes within the confidence linces, indicating 0 autocorrelation. The sample ACF's are mostly within the lines but all seem to have at least one long spike, indicating autocorrelation. 
+
+#Question 2
+```{r}
+ls1 <- list(order = c(1, 0, 0), ar = -0.05)
+mu <- 1
+
+AR1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+plot(AR1)
+```
+
+```{r}
+acf(AR1)
+```
+```{r}
+ls1 <- list(order = c(1, 0, 0), ar = 0)
+mu <- 1
+
+samp1_AR1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+acf(samp1_AR1)
+```
+
+```{r}
+ls1 <- list(order = c(1, 0, 0), ar = 0.5)
+mu <- 1
+
+samp2_AR1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+acf(samp2_AR1)
+```
+
+```{r}
+ls1 <- list(order = c(1, 0, 0), ar = 0.9)
+mu <- 1
+
+samp3_AR1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+acf(samp3_AR1)
+```
+
+```{r}
+ls1 <- list(order = c(1, 0, 0), ar = 0.99)
+mu <- 1
+
+samp4_AR1 <- arima.sim(n = 250, model = ls1, sd = 0.31622777) + mu
+acf(samp4_AR1)
+```
+
+The theoretical ACF for AR(1) looks good with all spikes within the confidence lines. As we increase phi, the ACF becomes increasingly significantly correlated. Sample 4, phi = 0.99, is is closest to nonstationary time series.
+
+#Question 3
+```{r}
+setwd("/Users/madelyncaufield/Desktop/ECON432 Data Science for Financial Engineering/Homework 5")
+```
+
+```{r}
+df <- read.csv("DAL.csv")
+head(df)
+```
+
+```{r}
+library(dplyr)
+
+DAL.df = df %>%
+          select(Date, Adj.Close)
+
+head(DAL.df)
+```
+
+```{r}
+class(DAL.df$Date)
+DAL.df$Date <- as.Date(DAL.df$Date,format = '%Y-%m-%d')
+class(DAL.df$Date)
+```
+
+```{r}
+plot(Adj.Close~Date, DAL.df, type='l',col="blue",xlab = 'Date',ylab='Dela Air Lines Prices',
+     main='Monthly Prices of Delta Air Lines Shares')
+T <- length(DAL.df$Date)
+ticks <- seq(DAL.df$Date[1], DAL.df$Date[T], by = "quarters")
+axis(1, at = ticks, labels = FALSE)
+legend('topleft', names(DAL.df), col= "blue", lty=1, cex=.65)
+```
+
+```{r}
+DAL.df$cc.ret[2:T] <-  log(DAL.df$Adj.Close[2:T]/DAL.df$Adj.Close[1:(T-1)])
+head(DAL.df$cc.ret)
+
+head(DAL.df)
+```
+
+```{r}
+DAL.df <- DAL.df[,c('Date','cc.ret')] 
+DAL.df <- DAL.df[-c(1),]
+
+head(DAL.df)
+```
+
+#3A
+```{r}
+Ret = DAL.df$cc.ret
+Box.test(Ret, lag = 10, type = c("Ljung-Box"), fitdf = 0)
+```
+The p-value is larger than 0.05, indicating that the residuals are independent. 
+
+#3B
+```{r}
+Ret = DAL.df$cc.ret
+AR1 = (arima(Ret, order = c(1,0,0)))
+```
+
+```{r}
+library(forecast)
+checkresiduals(AR1)
+```
+The AR(1) model does not model the linear dependence of the cc return appropriately.
+
+#3C
+```{r}
+auto.arima(Ret, max.p=10, max.q=0, ic="aic", stepwise=F)
+```
+
+```{r}
+AR5 = (arima(x = Ret, order = c(5,0,0)))
+AR5
+```
+
+#3D
+```{r}
+checkresiduals(AR5)
+```
+The AR(5) model does not model the linear dependence of the cc return appropriately.
+
+#3E
+```{r}
+auto.arima(Ret, max.p=10, max.q=10, ic = "aic", stepwise = F)
+```
+
+```{r}
+ARMA31 = (arima(x = Ret, order = c(3,0,1))) 
+ARMA31
+```
+
+#3F
+```{r}
+checkresiduals(ARMA31)
+```
+The ARMA(3,1) model models the linear dependence of the cc return the most appropriately out of all the other models.There appears to be only one spike in the ACF spot of the fitted residuals.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

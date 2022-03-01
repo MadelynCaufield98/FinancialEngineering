@@ -1,0 +1,178 @@
+---
+title: "ECON 432 Homework 4 R Excercises"
+author: "Madelyn Caufield"
+date: "`r format(Sys.Date(),'%b %d,%Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    number_sections: yes
+    theme: united
+    highlight: tango
+---
+
+# 1A
+```{r}
+set.seed(432)
+````
+
+```{r}
+options(digits=4, width=70)
+# Round off a number to 4 decimal places
+# The width option says how many characters R should put on a line.
+
+library(tseries)
+
+# look at help on get.hist.quote
+# ?get.hist.quote
+
+# get the adjusted closing prices from Yahoo!
+AAPL.prices = get.hist.quote(instrument="AAPL", start="2010-01-01",
+                             end="2021-01-31", quote="AdjClose",
+                             provider="yahoo", 
+                             compression="w", retclass="zoo") 
+```
+
+```{r}
+AAPL.return = diff(log(AAPL.prices))
+T = length(AAPL.return)
+
+mu.hat = mean(AAPL.return)
+sigma.hat = sd(AAPL.return)
+variance = sigma.hat^2
+SE = sigma.hat/sqrt(T-1) 
+cbind(mu.hat,variance,SE)
+```
+
+# 1B
+```{r}
+library(bootstrap)
+nboot = 1000
+sam_m = function(x){mean(x)}
+Ret <- as.numeric(AAPL.return)
+results = bootstrap(Ret, nboot, sam_m)
+B_SE = sd(results$thetastar)
+IQR_SE = IQR(results$thetastar)/(qnorm(0.75)-qnorm(0.25))
+cbind(SE, B_SE, IQR_SE)
+```
+The SE, bootstrap SE, and IQR SE are all fairly close to eachother with the SE and IQR SE being the closest.
+
+# 1C
+```{r}
+library(bootstrap)
+nboot = 1000
+sam_m = function(x){mean(x)}
+Ret <- as.numeric(AAPL.return)
+results = bootstrap(Ret, nboot, sam_m)
+B_SE = sd(results$thetastar)
+B_SE
+IQR_SE = IQR(results$thetastar)/(qnorm(0.75)-qnorm(0.25))
+IQR_SE
+```
+
+# 1D
+```{r}
+B_bias = mean(results$thetastar)-mu.hat
+MSE = mean((results$thetastar-mu.hat)^2)
+cbind(B_bias,MSE)
+```
+
+# 1E
+```{r}
+alpha = 0.05
+q_sym = quantile(abs(results$thetastar-mu.hat),1-alpha)
+q_et_1 = quantile(mu.hat-results$thetastar,alpha/2)
+q_et_2 = quantile(mu.hat-results$thetastar,1-alpha/2)
+
+CI_et = c(mu.hat+q_et_1, mu.hat+q_et_2)
+CI_sym = c(mu.hat-q_sym, mu.hat+q_sym)
+cbind(CI_et,CI_sym)
+```
+
+# 1F
+```{r}
+W0 <- 1000
+alpha <- 0.1
+L1 <- W0*(exp(AAPL.return)-1)
+VaR_Para_Est <- W0*(exp(qnorm(alpha,mu.hat,sigma.hat))-1)
+
+VaR_NonP_Est <- W0*(exp(quantile(AAPL.return,alpha))-1)
+
+library(cvar)
+L1_qf <- function(x){ W0*(exp(qnorm(x, mu.hat, sigma.hat)) - 1)}
+para_ES <- -1*ES(L1_qf, x = alpha, dist.type = "qf")
+
+ind <- as.numeric(L1 <= VaR_NonP_Est)
+nonp_ES <- mean(L1*ind)/mean(ind)
+
+cbind(VaR_Para_Est, para_ES,VaR_NonP_Est,nonp_ES)
+```
+
+
+# 1G
+```{r}
+set.seed(123)
+nboot <-  1000
+VaR_Est  <- function(x, p = alpha){ W0*(exp(quantile(x, p)) - 1) }
+
+Ret <- as.numeric(AAPL.return) 
+results_VaR <- bootstrap(Ret, nboot, VaR_Est)
+
+B_SE_VaR <- sd(results_VaR$thetastar)
+
+Q_VaR <- quantile(results_VaR$thetastar, c(0.25, 0.75))
+B_IQRSE_VaR <- (Q_VaR[2] - Q_VaR[1])/(qnorm(0.75) - qnorm(0.25))
+
+ES_Est   <- function(x, p=alpha){
+var_est  = W0*(exp(quantile(x, p)) - 1)
+L1       = W0*(exp(x) - 1)
+ind      = as.numeric(L1 <= var_est)
+f_val    = mean(L1*ind)/mean(ind)
+return(f_val)
+}
+
+set.seed(123)
+results_ES <- bootstrap(Ret,nboot,ES_Est)
+
+Q_ES <- quantile(results_ES$thetastar, c(0.25, 0.75))
+B_SE_ES <- sd(results_ES$thetastar)
+B_IQRSE_ES <- (Q_ES[2] - Q_ES[1])/(qnorm(0.75) - qnorm(0.25))
+
+cbind(B_SE_VaR,B_IQRSE_VaR,B_SE_ES,B_IQRSE_ES)
+```
+
+# 1H
+```{r}
+CI_B_SE1.ES <- c(nonp_ES - B_SE_ES*1.96,    nonp_ES + B_SE_ES*1.96)
+CI_B_SE1.VaR <- c(VaR_NonP_Est - B_SE_VaR*1.96,    VaR_NonP_Est + B_SE_VaR*1.96)
+cbind(CI_B_SE1.ES,CI_B_SE1.VaR)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
